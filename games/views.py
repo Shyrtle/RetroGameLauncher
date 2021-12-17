@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.core.paginator import Paginator, PageNotAnInteger
 from .models import Game
 import os
 import threading
@@ -8,7 +9,21 @@ def open_game(game_location):
 
 # Create your views here.
 def home(request):
-    games = Game.objects.all()
+    if 'q' in request.GET:
+        q=request.GET['q']
+        games_list = Game.objects.filter(title__icontains=q)
+    else:
+        games_list = Game.objects.all()
+    paginator = Paginator(games_list, 5) # Show 10 per page.
+
+    page = request.GET.get('page')
+    try:
+        games = paginator.page(page)
+    except PageNotAnInteger:
+        games = paginator.page(1)
+    except EmptyPage:
+        games = paginator.page(paginator.num_pages)
+
     ctx = {'games': games}
     return render(request, 'games/home.html', ctx)
 
